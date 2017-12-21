@@ -10,26 +10,32 @@ import android.view.View;
 import java.util.ArrayList;
 
 public class MainActivity extends Activity {
-
-    ArrayList<String> display;
     // String displayMath;
-    boolean negative;
+    ArrayList<String> runningNumber;
+    TextView tvResult;
+    TextView tvDisplay;
+
     boolean decimalOn;
+    boolean negative;
+    boolean doMath;
     boolean calcOn;
+
     String operator;
-    // String math;
+    String math;
+
+    float leftValue;
+    float rightValue;
     float result;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        init();
+        //Link Text Views to diplay
+        tvResult = (TextView) findViewById(R.id.textViewTotal);
+        tvDisplay = (TextView) findViewById(R.id.textViewInput);
         //Set onlcick listeners
         initBtnId();
-        //Link Text Views to diplay
-        TextView tvResult = (TextView) findViewById(R.id.textViewTotal);
-        TextView tvDisplay = (TextView) findViewById(R.id.textViewInput);
         // Link UI ImageButton
         ImageButton iBtnCalc = (ImageButton) findViewById(R.id.iBtnCalc);
         //Anonimus Inner Class
@@ -37,42 +43,15 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 //do final resolve and pass the last used operator
-                resolve(operator);
-                //Update UI 
-                updateResultDisplay();
                 calcOn = true;
-                // displayMath = String.valueOf(result);
-                
+                resolve("=");
+                // verify that equals wass pressed
                 //Carry over the final result
-                display.add(String.valueOf(result));
+                runningNumber.add(String.valueOf(result));
+
             }
         });
-    }
-
-    public void initBtnId() {
-        // Link UI value buttons
-        findViewById(R.id.btn1).setOnClickListener(buttonClickListenerN);
-        findViewById(R.id.btn2).setOnClickListener(buttonClickListenerN);
-        findViewById(R.id.btn3).setOnClickListener(buttonClickListenerN);
-        findViewById(R.id.btn4).setOnClickListener(buttonClickListenerN);
-        findViewById(R.id.btn5).setOnClickListener(buttonClickListenerN);
-        findViewById(R.id.btn6).setOnClickListener(buttonClickListenerN);
-        findViewById(R.id.btn7).setOnClickListener(buttonClickListenerN);
-        findViewById(R.id.btn8).setOnClickListener(buttonClickListenerN);
-        findViewById(R.id.btn9).setOnClickListener(buttonClickListenerN);
-        findViewById(R.id.btn0).setOnClickListener(buttonClickListenerN);
-        //Value foramters buttons
-        findViewById(R.id.btnDel).setOnClickListener(buttonClickListenerN);
-        findViewById(R.id.btnDot).setOnClickListener(buttonClickListenerN);
-        findViewById(R.id.btnNeg).setOnClickListener(buttonClickListenerN);
-        // Link UI operation buttons
-        findViewById(R.id.btnAc).setOnClickListener(buttonClickListener);
-        findViewById(R.id.btnMod).setOnClickListener(buttonClickListener);
-        findViewById(R.id.btnCent).setOnClickListener(buttonClickListener);
-        findViewById(R.id.btnDiv).setOnClickListener(buttonClickListener);
-        findViewById(R.id.btnMulti).setOnClickListener(buttonClickListener);
-        findViewById(R.id.btnMinus).setOnClickListener(buttonClickListener);
-        findViewById(R.id.btnPlus).setOnClickListener(buttonClickListener);
+        init();
     }
 
     //--OPERATIONS---//
@@ -109,133 +88,212 @@ public class MainActivity extends Activity {
     private View.OnClickListener buttonClickListenerN = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            if (calcOn) init();
+            if (calcOn)
+                init();
             switch (view.getId()) {
             case R.id.btn1:
-                display.add("1");
+                runningNumber.add("1");
                 break;
             case R.id.btn2:
-                display.add("2");
+                runningNumber.add("2");
                 break;
             case R.id.btn3:
-                display.add("3");
+                runningNumber.add("3");
                 break;
             case R.id.btn4:
-                display.add("4");
+                runningNumber.add("4");
                 break;
             case R.id.btn5:
-                display.add("5");
+                runningNumber.add("5");
                 break;
             case R.id.btn6:
-                display.add("6");
+                runningNumber.add("6");
                 break;
             case R.id.btn7:
-                display.add("7");
+                runningNumber.add("7");
                 break;
             case R.id.btn8:
-                display.add("8");
+                runningNumber.add("8");
                 break;
             case R.id.btn9:
-                display.add("9");
+                runningNumber.add("9");
                 break;
             case R.id.btn0:
-                display.add("0");
+                runningNumber.add("0");
                 break;
             //--OPERATIONS---//
             case R.id.btnDel:
-                display.remove(display.size() - 1);
+                if (runningNumber.size() > 0)
+                    runningNumber.remove(runningNumber.size() - 1);
                 break;
             case R.id.btnDot:
                 if (!decimalOn) {
-                    display.add(".");
+                    if (runningNumber.size() > 0) {
+                        runningNumber.add(".");
+                    } else {
+                        runningNumber.add("0");
+                        runningNumber.add(".");
+                    }
                     decimalOn = true;
                 }
                 break;
             case R.id.btnNeg:
-                negative = !negative;
-                if (negative) {
-                    display.add(0, "-");
-                } else {
-                    display.remove(0);
+                if (runningNumber.size() > 0) {
+                    negative = !negative;
+                    if (negative) {
+                        runningNumber.add(0, "-");
+                    } else {
+                        runningNumber.remove(0);
+                    }
+                    break;
                 }
-                break;
             }
-            updateResultDisplay();
+            updateResultDisplay(getValue());
         }
     };
 
-    private void resolve(String sign) {
-        float value = Float.parseFloat(getValue());
-        if (operator.equals("")) {
-            result = value;
-            operator = sign;
-        } else {
-            float number = value;
-            switch (operator) {
-            case "*":
-                result *= number;
-                break;
-            case "+":
-                result += number;
-                break;
-            case "-":
-                result -= number;
-                break;
-            case "m":
-                result %= number;
-                break;
-            case "%":
-                result = result / 100 * number;
-                break;
-            case "/":
-                if (number != 0) {
-                    result /= number;
+    private void resolve(String op) {
+        if (runningNumber.size() > 0) {
+            //togle operation 
+            if (!doMath) {
+                if (calcOn) {
+                    leftValue = result;
                 } else {
-                    // print error 
+                    leftValue = getValue();
+                    operator = op;
                 }
-                break;
+                doMath = true;
+            } else {
+                rightValue = getValue();
+                switch (operator) {
+                case "*":
+                    result = leftValue * rightValue;
+                    break;
+                case "+":
+                    result = leftValue + rightValue;
+                    break;
+                case "-":
+                    result = leftValue - rightValue;
+                    break;
+                case "m":
+                    result = leftValue % rightValue;
+                    break;
+                case "%":
+                    result = leftValue / 100 * rightValue;
+                    break;
+                case "/":
+                    if (rightValue != 0) {
+                        result = leftValue / rightValue;
+                    } else {
+                        // print error
+                        tvResult.setText("Error: Division by 0");
+                    }
+                    break;
+                }
+
+                updateResultDisplay(result);
+
+                if (!op.equals("=")) {
+                    operator = op;
+                }
+
+                doMath = false;
             }
-
+            updateMathDisplay(getValue(), operator);
+            runningNumber.clear();
+            decimalOn = false;
+            negative = false;
         }
-        decimalOn = false;
-        negative = false;
-
     }
 
-    private String getValue() {
-        String n = (negative == true) ? "-" : "";
-        for (int i = 0; i < display.size(); i++) {
-            char c = display.get(i).charAt(0);
-            if (Character.isDigit(c) || c == '.') {
-                n += c;
-            }
+    private float getValue() {
+        int s = runningNumber.size();
+        if (s == 0) {
+            return 0;
         }
-        display.clear();
-        return n;
+        // String n = (negative == true) ? "-" : "";
+        String n = "";
+        for (int i = 0; i < s; i++) {
+            char c = runningNumber.get(i).charAt(0);
+            n += c;
+        }
+        if (n.equals("0.")) {
+            n = "0.000001";
+        }
+        return Float.parseFloat(n);
     }
 
-    private void updateResultDisplay() {
-        if (display.size() == 0) {
-            // display = result
+    private void updateMathDisplay(float value, String sign) {
+        String pattern = (value == Math.floor(value)) ? "%.0f" : "%.2f";
+        math += String.format(pattern, value) + " " + sign + " ";
+        //Verify if iBtnCalc is pressed
+        if (calcOn)
+            math = result + " ";
+        tvDisplay.setText(math);
+    }
 
-        } else {
-            //print getvalue
-            getValue();
+    private void updateResultDisplay(float result) {
+        String strResult = String.valueOf(result);
+
+        int indx = strResult.indexOf(".");
+        int decimals = 0;
+
+        for (int i = indx  + 1; i < strResult.length(); i++) {
+            if (strResult.charAt(i) != '0') {
+                decimals = i - indx;
+            }
         }
+        decimals = (decimals > 6)? 6:decimals;
+
+        String pattern = (result == Math.floor(result))?"%13.0f":"%13."+decimals+"f";
+        tvResult.setText(String.format(pattern, result));
+        //Test for a float without decimals and not infinite
+        // (result == Math.floor(result)) && !Float.isInfinite(result)) 
     }
 
     private void init() {
-        display = new ArrayList<String>();
+        runningNumber = new ArrayList<String>();
         // displayMath = "";
+        rightValue = 0;
+        leftValue = 0;
         negative = false;
+        doMath = false;
         decimalOn = false;
         calcOn = false;
         operator = "";
-        // math = "";
+        math = "";
         result = 0;
 
-        //reset display
+        //reset runningNumber
+        tvDisplay.setText("Calculator");
         //reset result
+        tvResult.setText("0");
+    }
+
+    public void initBtnId() {
+        // Link UI value buttons
+        findViewById(R.id.btn1).setOnClickListener(buttonClickListenerN);
+        findViewById(R.id.btn2).setOnClickListener(buttonClickListenerN);
+        findViewById(R.id.btn3).setOnClickListener(buttonClickListenerN);
+        findViewById(R.id.btn4).setOnClickListener(buttonClickListenerN);
+        findViewById(R.id.btn5).setOnClickListener(buttonClickListenerN);
+        findViewById(R.id.btn6).setOnClickListener(buttonClickListenerN);
+        findViewById(R.id.btn7).setOnClickListener(buttonClickListenerN);
+        findViewById(R.id.btn8).setOnClickListener(buttonClickListenerN);
+        findViewById(R.id.btn9).setOnClickListener(buttonClickListenerN);
+        findViewById(R.id.btn0).setOnClickListener(buttonClickListenerN);
+        //Value foramters buttons
+        findViewById(R.id.btnDel).setOnClickListener(buttonClickListenerN);
+        findViewById(R.id.btnDot).setOnClickListener(buttonClickListenerN);
+        findViewById(R.id.btnNeg).setOnClickListener(buttonClickListenerN);
+        // Link UI operation buttons
+        findViewById(R.id.btnAc).setOnClickListener(buttonClickListener);
+        findViewById(R.id.btnMod).setOnClickListener(buttonClickListener);
+        findViewById(R.id.btnCent).setOnClickListener(buttonClickListener);
+        findViewById(R.id.btnDiv).setOnClickListener(buttonClickListener);
+        findViewById(R.id.btnMulti).setOnClickListener(buttonClickListener);
+        findViewById(R.id.btnMinus).setOnClickListener(buttonClickListener);
+        findViewById(R.id.btnPlus).setOnClickListener(buttonClickListener);
     }
 
 }
