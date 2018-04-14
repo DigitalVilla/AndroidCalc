@@ -1,6 +1,7 @@
 # Android Calculator
-### Android development using Java and a cool responsive design
-
+### Android development using Java and a personalized UI
+#### Technologies
+Android and JAVA
 ## Key operations
 "ac" clears the cache
 </br>
@@ -8,6 +9,6 @@
 </br>
 "mod" does modulus operations. 
 #### Screen Shot
-![Screenshot](Screenshot.png) 
+![Screenshot](Screenshotr.png) 
 </br>
 This project is still under development.
